@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>MaCal</title>
+
+    <link rel="stylesheet" href="https://cdn.skypack.dev/sanitize.css">
+    <style>
+      body>*{
+        text-align:center;
+        margin:auto;
+      }
+      #title{font-size:45px;}
+      small{font-size:0.4em;}
+      small:before{content:" ";}
+      form>*{display:inline-block;}
+
+      td{
+        border:1px solid black;
+        width:14vw;
+        color:#f3f3f3;
+        line-height:11vh;
+        font-size:10vmin;
+        text-size-adjust: auto;
+      }
+      td>span{
+        color:#000;
+        line-height:1.2rem;
+        text-decoration:underline;
+        font-size:1rem;
+      }
+
+      @media print{form{display:none;}}
+    </style>
+    <style id="js"></style>
+    <script>
+      const days=["日","月","火","水","木","金","土"];
+      function DtoCal(sta,fin,fir=0){
+        const cal=[];
+        const D=new Date(sta.getTime());
+        mkCal:for(let w=0;true;w++){
+          cal[w]=[];
+          while(true){
+            cal[w][(D.getDay()+7-fir)%7]=[D.getDate(),(fin.getTime()-D.getTime())/(24*60*60*1000)];
+            D.setDate(D.getDate()+1);
+            if(D.getTime()>fin.getTime()){break mkCal;}
+            if((D.getDay()+7-fir)%7==0){break;}
+          }
+        }
+        return cal;
+      }
+    </script>
+  </head>
+  <body>
+    <h1 id="title">MaCal<small>ver1.0.9</small></h1>
+    <form name="prop">
+      <label>開始日<input type="date" name="sta" value="2024-01-01"></label>
+      <label>開始曜日<select name="day">
+        <script>for(d of days){document.write("<option>"+d+"</option>");}</script>
+      <label>終了日<input type="date" name="end" value="2024-02-15"></label>
+    </form>
+    <table id="res"></table>
+    <script>
+      const form=document.prop;
+      const table=document.getElementById("res");
+      const styl=document.getElementById("js");
+
+      for(ele of form){ele.onblur=function(){
+        const day=form.day.selectedIndex;
+        const result=DtoCal(new Date(form.sta.valueAsNumber),new Date(form.end.valueAsNumber),day);
+        while( table.firstChild ){table.removeChild( table.firstChild );}
+        while( styl.firstChild ){styl.removeChild( styl.firstChild );}
+
+        const dy=[];
+        let sun=0;
+        for(let c=0;c<7;c++){
+          dy.push([days[(day+c)%7]]);
+          if((day+c)%7==0){styl.appendChild(document.createTextNode(
+            `tr>td:nth-child(${c+1})>span{color:red;}
+             tr>td:nth-child(${c+1}){background-color:#fdd;}`
+          ))}
+          if((day+c)%7==6){styl.appendChild(document.createTextNode(
+            `tr>td:nth-child(${c+1})>span{color:blue;}
+             tr>td:nth-child(${c+1}){background-color:#ddf;}`
+          ))}
+        }
+        result.unshift(dy);
+        
+        for(w of result){
+          let row=table.appendChild(document.createElement("tr"));
+          for(let d=0;d<7;d++){
+            let ele=row.appendChild(document.createElement("td"));
+            ele.style.position="relative";
+            if(!w[d]){continue;}
+            ele.innerHTML=(w[d].length==2)? `<span style="position: absolute;left:0;top:0;">${w[d][0]}</span>${w[d][1]}`:`<span>${w[d][0]}</span>`;
+            if(w[d].length==1){ele.style.lineHeight="1rem";}
+          }
+        }
+      }}
+      document.getElementById("title").onclick=function(e){e.target.textContent=prompt("タイトルを入力");}
+    </script>
+  </body>
+</html>
